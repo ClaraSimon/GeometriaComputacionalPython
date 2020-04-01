@@ -6,7 +6,7 @@ import random
 
 TAMANNO_PUNTOS = 15
 MAX_COORDS = 101
-NUM_PUNTOS = 29
+NUM_PUNTOS = 16
 
 
 class Punto:
@@ -131,9 +131,11 @@ def mostrarPuntos(lista):
 
 
 def calcularEnvolventeConexa(listaPuntos):
+    #Esperamos a tener un conjunto pequeño de puntos para calcular su envolvente conexa
     if len(listaPuntos) < 6:
-        pintarPuntos([listaPuntos])
+
         envolventePequeña = envolventeFuerzaBruta(listaPuntos)
+        pintarPuntos([envolventePequeña])
         return envolventePequeña
     else:
         longitud = len(listaPuntos)
@@ -147,8 +149,9 @@ def calcularEnvolventeConexa(listaPuntos):
         envolventeUno = calcularEnvolventeConexa(mitadUno)
         envolventeDos = calcularEnvolventeConexa(mitadDos)
         pintarEnvolventes([envolventeUno, envolventeDos])
-
-        return envolventeUno
+        envolventeConjunta = unirEnvolventesConexas(envolventeUno, envolventeDos)
+        pintarEnvolventes([envolventeConjunta])
+        return envolventeConjunta
 
 
 def envolventeFuerzaBruta(listPuntos):
@@ -167,7 +170,6 @@ def envolventeFuerzaBruta(listPuntos):
                     if q.esDistintoDe(siguientePunto) and q.esDistintoDe(p):
                         if estaALaDerecha(siguientePunto, p, q):
                             contadorPuntosALaDerecha = contadorPuntosALaDerecha+1
-            print(contadorPuntosALaDerecha)
             #Si todos los demas puntos estan a la derecha, hemos encontrado el siguiente vértice
             if contadorPuntosALaDerecha == numPuntos-2:
                 envolvente.append(p)
@@ -182,14 +184,105 @@ def envolventeFuerzaBruta(listPuntos):
 
 
 def unirEnvolventesConexas(envolventeUno, envolventeDos):
-    #Cogemos el punto más a la derecha de la primera envolvente
-    indiceUno = calcularPuntoMasALaDerecha(envolventeUno)
+    envolventeConjunta = []
+    indicesSuperiores = calcularTangenteSuperior(envolventeUno, envolventeDos)
+    indicesInferiores = calcularTangenteInferior(envolventeUno, envolventeDos)
+
+    envolventeConjunta += envolventeUno[0: indicesSuperiores[0]+1]
+    if indicesInferiores[1] == 0:
+        envolventeConjunta += envolventeDos[indicesSuperiores[1]: len(envolventeDos)]
+        envolventeConjunta.append(envolventeDos[0])
+    else:
+        envolventeConjunta += envolventeDos[indicesSuperiores[1]: indicesInferiores[1]+1]
+    if indicesInferiores[0] != 0:
+        envolventeConjunta += envolventeUno[indicesInferiores[0]: len(envolventeUno)]
+
+    return envolventeConjunta
+
+
+def calcularTangenteSuperior(envolventeUno, envolventeDos):
+
+    tamEnvolventeDos = len(envolventeDos)
+    tamEnvolventeUno = len(envolventeUno)
+
+    # Cogemos la posición en la lista del punto más a la derecha de la primera envolvente
+    indiceUnoSuperior = calcularPuntoMasALaDerecha(envolventeUno)
+    # Cogemos la posición en la lista del punto más a la izquierda de la segunda envolvente
+    indiceDosSuperior = 0  # En este caso será siempre la primera
+
+    p = envolventeUno[indiceUnoSuperior]
+    q1 = envolventeDos[indiceDosSuperior]
+    q2 = envolventeDos[indiceDosSuperior+1]
+
+    encontrada = False
+
+    while not encontrada:
+        encontrada = True
+
+        while not estaALaDerecha(p, q1, q2):
+            indiceDosSuperior = (indiceDosSuperior+1) % tamEnvolventeDos
+            q1 = envolventeDos[indiceDosSuperior]
+            q2 = envolventeDos[(indiceDosSuperior+1) % tamEnvolventeDos]
+
+        verticeDosSuperior = q1
+        p1 = p
+        p2 = envolventeUno[indiceUnoSuperior - 1]
+        while estaALaDerecha(verticeDosSuperior, p1, p2):
+            indiceUnoSuperior = (tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno
+            p1 = envolventeUno[indiceUnoSuperior]
+            p2 = envolventeUno[(indiceUnoSuperior - 1)]
+            encontrada = False
+        p = p1
+
+    return [indiceUnoSuperior, indiceDosSuperior]
+
+
+def calcularTangenteInferior(envolventeUno, envolventeDos):
+
+    tamEnvolventeDos = len(envolventeDos)
+    tamEnvolventeUno = len(envolventeUno)
+
+    # Cogemos la posición en la lista del punto más a la derecha de la primera envolvente
+    indiceUnoSuperior = calcularPuntoMasALaDerecha(envolventeUno)
+    # Cogemos la posición en la lista del punto más a la izquierda de la segunda envolvente
+    indiceDosSuperior = len(envolventeDos)-1  # En este caso será siempre la primera
+
+    p = envolventeUno[indiceUnoSuperior]
+    q1 = envolventeDos[0]
+    q2 = envolventeDos[indiceDosSuperior]
+
+    encontrada = False
+
+    while not encontrada:
+        encontrada = True
+
+        while not estaALaDerecha(p, q1, q2):
+            indiceDosSuperior = (tamEnvolventeDos + indiceDosSuperior - 1) % tamEnvolventeDos
+            q1 = envolventeDos[indiceDosSuperior]
+            q2 = envolventeDos[indiceDosSuperior-1]
+
+        verticeDosSuperior = q1
+        p1 = p
+        p2 = envolventeUno[(indiceUnoSuperior + 1) % tamEnvolventeUno]
+        while estaALaDerecha(verticeDosSuperior, p1, p2):
+            indiceUnoSuperior = (indiceUnoSuperior + 1) % tamEnvolventeUno
+            p1 = envolventeUno[indiceUnoSuperior]
+            p2 = envolventeUno[(indiceUnoSuperior + 1) % tamEnvolventeUno]
+            encontrada = False
+        p = p1
+
+    return [indiceUnoSuperior, indiceDosSuperior]
 
 
 def calcularPuntoMasALaDerecha(envolvente):
     max = 0
+    indice = 0
     for i in range(len(envolvente)):
-        print("Hola")
+        coordX = envolvente[i].getCoordX()
+        if coordX > max:
+            indice = i
+            max = coordX
+    return indice
 
 def split(input_list):
     input_list_len = len(input_list)
