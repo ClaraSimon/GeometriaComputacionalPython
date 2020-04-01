@@ -1,8 +1,13 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
-TAMANNO_PUNTOS = 25
+
+TAMANNO_PUNTOS = 15
+MAX_COORDS = 101
+NUM_PUNTOS = 29
+
 
 class Punto:
 
@@ -31,20 +36,23 @@ class Punto:
         return self.coords[0] != otro.coords[0] or self.coords[1] != otro.coords[1]
 
 
-def pintarPuntos(listaPuntos):
-    x = []
-    y = []
+def pintarPuntos(listasPuntos):
+    plt.xlim(0, MAX_COORDS+10)
+    plt.ylim(0, MAX_COORDS+10)
 
-    for p in listaPuntos:
-        x.append(p.getCoordX())
-        y.append(p.getCoordY())
-    plt.scatter(x, y, s=TAMANNO_PUNTOS)
+    for lista in listasPuntos:
+        x = []
+        y = []
+
+        for p in lista:
+            x.append(p.getCoordX())
+            y.append(p.getCoordY())
+        plt.scatter(x, y, s=TAMANNO_PUNTOS)
     plt.show()
 
 
 def eliminarPuntosAlineados(puntos):
     copiaPuntos = puntos
-    print(copiaPuntos)
     for a in puntos:
         for b in puntos:
             if b.esDistintoDe(a):
@@ -67,23 +75,102 @@ def estanAlineados(a, b, c):
     det = np.linalg.det(matrizBase)
 
     return det == 0
+#fin estanAlineados
+
+
+def crearPuntos():
+    listaCoordsX = list(range(1, MAX_COORDS))
+    random.shuffle(listaCoordsX)
+    listaCoordsX = listaCoordsX[0: NUM_PUNTOS]
+    listaCoordsX = merge_sort(listaCoordsX)
+
+    listaCoordsY = list(range(1, MAX_COORDS))
+    random.shuffle(listaCoordsY)
+
+    listaPuntos = []
+    for i in range(NUM_PUNTOS):
+        x = listaCoordsX[i]
+        y = listaCoordsY[i]
+        listaPuntos.append(Punto(x, y))
+
+    return listaPuntos
+#fin crearPuntos
+
+
+def mostrarPuntos(lista):
+    for p in lista:
+        print(p)
+
+
+def calcularEnvolventeConexa(listaPuntos):
+    if len(listaPuntos) < 6:
+        print(len(listaPuntos))
+        mostrarPuntos(listaPuntos)
+        pintarPuntos([listaPuntos])
+    else:
+        longitud = len(listaPuntos)
+
+        #Dividimos la lista en dos mitades
+        mitadUno = listaPuntos[0: longitud//2]
+        mitadDos = listaPuntos[longitud//2: longitud]
+
+        pintarPuntos([mitadUno, mitadDos])
+        #LLamada recursiva
+        calcularEnvolventeConexa(mitadDos)
+        calcularEnvolventeConexa(mitadUno)
+
+
+def split(input_list):
+    input_list_len = len(input_list)
+    midpoint = input_list_len // 2
+    return input_list[:midpoint], input_list[midpoint:]
+
+
+def merge_sorted_lists(list_left, list_right):
+    # Special case: one or both of lists are empty
+    if len(list_left) == 0:
+        return list_right
+    elif len(list_right) == 0:
+        return list_left
+
+    # General case
+    index_left = index_right = 0
+    list_merged = []
+    list_len_target = len(list_left) + len(list_right)
+    while len(list_merged) < list_len_target:
+        if list_left[index_left] <= list_right[index_right]:
+            list_merged.append(list_left[index_left])
+            index_left += 1
+        else:
+            list_merged.append(list_right[index_right])
+            index_right += 1
+
+        if index_right == len(list_right):
+            list_merged += list_left[index_left:]
+            break
+        elif index_left == len(list_left):
+            list_merged += list_right[index_right:]
+            break
+
+    return list_merged
+
+
+def merge_sort(input_list):
+    if len(input_list) <= 1:
+        return input_list
+    else:
+        left, right = split(input_list)
+        # The following line is the most important piece in this whole thing
+        return merge_sorted_lists(merge_sort(left), merge_sort(right))
+
 
 if __name__ == "__main__":
-    print("Hola")
-    punto1 = Punto(1, 2)
-    punto2 = Punto(1, 5)
-    punto3 = Punto(2, 3)
-    punto4 = Punto(7, 6)
-    punto5 = Punto(4, 1)
-    punto6 = Punto(4, 5)
-    print(punto1)
-    puntos = [punto1, punto2, punto3, punto4, punto5, punto6]
 
-    pintarPuntos(puntos)
-    puntosSinAlinear = eliminarPuntosAlineados(puntos)
-    pintarPuntos(puntosSinAlinear)
-    if punto1.esDistintoDe(punto2):
-        print("NO")
-    puntos = eliminarPuntosAlineados(puntos)
+    puntos = crearPuntos()
 
+    pintarPuntos([puntos])
+    puntosNoAlineados = eliminarPuntosAlineados(puntos)
+    pintarPuntos([puntosNoAlineados])
+    mostrarPuntos(puntosNoAlineados)
+    calcularEnvolventeConexa(puntosNoAlineados)
 
