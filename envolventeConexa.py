@@ -50,6 +50,23 @@ def pintarPuntos(listasPuntos):
         plt.scatter(x, y, s=TAMANNO_PUNTOS)
     plt.show()
 
+def pintarEnvolventes(listaEnvolventes):
+    plt.xlim(0, MAX_COORDS + 10)
+    plt.ylim(0, MAX_COORDS + 10)
+
+    for env in listaEnvolventes:
+        x = []
+        y = []
+
+        for p in env:
+            x.append(p.getCoordX())
+            y.append(p.getCoordY())
+        x.append(x[0])
+        y.append(y[0])
+        plt.scatter(x, y, s=TAMANNO_PUNTOS)
+        plt.plot(x, y)
+    plt.show()
+
 
 def eliminarPuntosAlineados(puntos):
     copiaPuntos = puntos
@@ -78,6 +95,17 @@ def estanAlineados(a, b, c):
 #fin estanAlineados
 
 
+#Dice si c está a la derecha de AB
+def estaALaDerecha(a, b, c):
+    vectorAB = a.calcularVectorCon(b)
+    vectorAC = a.calcularVectorCon(c)
+    matriz = np.array([vectorAB.tolist(), vectorAC.tolist()])
+    matrizBase = np.transpose(matriz)
+    det = np.linalg.det(matrizBase)
+
+    return det < 0
+
+
 def crearPuntos():
     listaCoordsX = list(range(1, MAX_COORDS))
     random.shuffle(listaCoordsX)
@@ -104,9 +132,9 @@ def mostrarPuntos(lista):
 
 def calcularEnvolventeConexa(listaPuntos):
     if len(listaPuntos) < 6:
-        print(len(listaPuntos))
-        mostrarPuntos(listaPuntos)
         pintarPuntos([listaPuntos])
+        envolventePequeña = envolventeFuerzaBruta(listaPuntos)
+        return envolventePequeña
     else:
         longitud = len(listaPuntos)
 
@@ -116,9 +144,52 @@ def calcularEnvolventeConexa(listaPuntos):
 
         pintarPuntos([mitadUno, mitadDos])
         #LLamada recursiva
-        calcularEnvolventeConexa(mitadDos)
-        calcularEnvolventeConexa(mitadUno)
+        envolventeUno = calcularEnvolventeConexa(mitadUno)
+        envolventeDos = calcularEnvolventeConexa(mitadDos)
+        pintarEnvolventes([envolventeUno, envolventeDos])
 
+        return envolventeUno
+
+
+def envolventeFuerzaBruta(listPuntos):
+    numPuntos = len(listPuntos)
+    envolvente = []
+    #Cogemos el punto más a la izquierda (ya está ordenado) y buscamos la primera arista
+    siguientePunto = listPuntos[0]
+    envolvente.append(siguientePunto)
+
+    while siguientePunto.esDistintoDe(envolvente[0]) or len(envolvente) <= 1:
+        #Buscamos otro punto de tal manera que conectandolo con sigPunto todos los demás queden a la derecha
+        for p in listPuntos:
+            contadorPuntosALaDerecha = 0
+            if p.esDistintoDe(siguientePunto):
+                for q in listPuntos:
+                    if q.esDistintoDe(siguientePunto) and q.esDistintoDe(p):
+                        if estaALaDerecha(siguientePunto, p, q):
+                            contadorPuntosALaDerecha = contadorPuntosALaDerecha+1
+            print(contadorPuntosALaDerecha)
+            #Si todos los demas puntos estan a la derecha, hemos encontrado el siguiente vértice
+            if contadorPuntosALaDerecha == numPuntos-2:
+                envolvente.append(p)
+                siguientePunto = p
+                #Con break salimos del bucle for
+                break
+
+    #Quitamos el elemento repetido
+    envolvente.pop()
+
+    return envolvente
+
+
+def unirEnvolventesConexas(envolventeUno, envolventeDos):
+    #Cogemos el punto más a la derecha de la primera envolvente
+    indiceUno = calcularPuntoMasALaDerecha(envolventeUno)
+
+
+def calcularPuntoMasALaDerecha(envolvente):
+    max = 0
+    for i in range(len(envolvente)):
+        print("Hola")
 
 def split(input_list):
     input_list_len = len(input_list)
@@ -167,7 +238,6 @@ def merge_sort(input_list):
 if __name__ == "__main__":
 
     puntos = crearPuntos()
-
     pintarPuntos([puntos])
     puntosNoAlineados = eliminarPuntosAlineados(puntos)
     pintarPuntos([puntosNoAlineados])
