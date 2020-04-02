@@ -84,6 +84,7 @@ def eliminarPuntosAlineados(puntos):
                                 copiaPuntos.remove(c)
     return copiaPuntos
 
+
 def estanAlineados(a, b, c):
     vectorAB = a.calcularVectorCon(b)
     vectorAC = a.calcularVectorCon(c)
@@ -130,13 +131,14 @@ def mostrarPuntos(lista):
         print(p)
 
 
+#Algoritmo divide y vencerás
 def calcularEnvolventeConexa(listaPuntos):
     #Esperamos a tener un conjunto pequeño de puntos para calcular su envolvente conexa
     if len(listaPuntos) < 6:
-
         envolventePequeña = envolventeFuerzaBruta(listaPuntos)
-        pintarPuntos([envolventePequeña])
         return envolventePequeña
+
+    # Si el conjunto no es lo suficientemente pequeño, lo dividimos en dos mitades.
     else:
         longitud = len(listaPuntos)
 
@@ -144,11 +146,14 @@ def calcularEnvolventeConexa(listaPuntos):
         mitadUno = listaPuntos[0: longitud//2]
         mitadDos = listaPuntos[longitud//2: longitud]
 
-        pintarPuntos([mitadUno, mitadDos])
-        #LLamada recursiva
+        #LLamada recursiva para calcular la envolvente conexa de cada mitad
         envolventeUno = calcularEnvolventeConexa(mitadUno)
         envolventeDos = calcularEnvolventeConexa(mitadDos)
+
+        #Mostramos los puntos y sus envolventes
+        pintarPuntos([mitadUno, mitadDos])
         pintarEnvolventes([envolventeUno, envolventeDos])
+
         envolventeConjunta = unirEnvolventesConexas(envolventeUno, envolventeDos)
         pintarEnvolventes([envolventeConjunta])
         return envolventeConjunta
@@ -191,9 +196,10 @@ def unirEnvolventesConexas(envolventeUno, envolventeDos):
     envolventeConjunta += envolventeUno[0: indicesSuperiores[0]+1]
     if indicesInferiores[1] == 0:
         envolventeConjunta += envolventeDos[indicesSuperiores[1]: len(envolventeDos)]
-        envolventeConjunta.append(envolventeDos[0])
+        envolventeConjunta += [envolventeDos[0]]
     else:
         envolventeConjunta += envolventeDos[indicesSuperiores[1]: indicesInferiores[1]+1]
+
     if indicesInferiores[0] != 0:
         envolventeConjunta += envolventeUno[indicesInferiores[0]: len(envolventeUno)]
 
@@ -202,8 +208,8 @@ def unirEnvolventesConexas(envolventeUno, envolventeDos):
 
 def calcularTangenteSuperior(envolventeUno, envolventeDos):
 
-    tamEnvolventeDos = len(envolventeDos)
     tamEnvolventeUno = len(envolventeUno)
+    tamEnvolventeDos = len(envolventeDos)
 
     # Cogemos la posición en la lista del punto más a la derecha de la primera envolvente
     indiceUnoSuperior = calcularPuntoMasALaDerecha(envolventeUno)
@@ -226,11 +232,11 @@ def calcularTangenteSuperior(envolventeUno, envolventeDos):
 
         verticeDosSuperior = q1
         p1 = p
-        p2 = envolventeUno[indiceUnoSuperior - 1]
+        p2 = envolventeUno[(tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno]
         while estaALaDerecha(verticeDosSuperior, p1, p2):
             indiceUnoSuperior = (tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno
             p1 = envolventeUno[indiceUnoSuperior]
-            p2 = envolventeUno[(indiceUnoSuperior - 1)]
+            p2 = envolventeUno[(tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno]
             encontrada = False
         p = p1
 
@@ -243,37 +249,39 @@ def calcularTangenteInferior(envolventeUno, envolventeDos):
     tamEnvolventeUno = len(envolventeUno)
 
     # Cogemos la posición en la lista del punto más a la derecha de la primera envolvente
-    indiceUnoSuperior = calcularPuntoMasALaDerecha(envolventeUno)
+    indiceUnoInferior = calcularPuntoMasALaDerecha(envolventeUno)
     # Cogemos la posición en la lista del punto más a la izquierda de la segunda envolvente
-    indiceDosSuperior = len(envolventeDos)-1  # En este caso será siempre la primera
+    indiceDosInferior = 0  # En este caso será siempre la primera
 
-    p = envolventeUno[indiceUnoSuperior]
-    q1 = envolventeDos[0]
-    q2 = envolventeDos[indiceDosSuperior]
+    q = envolventeDos[0]
+    p1 = envolventeUno[indiceUnoInferior]
+    p2 = envolventeUno[(indiceUnoInferior+1) % tamEnvolventeUno]
 
     encontrada = False
 
     while not encontrada:
         encontrada = True
 
-        while not estaALaDerecha(p, q1, q2):
-            indiceDosSuperior = (tamEnvolventeDos + indiceDosSuperior - 1) % tamEnvolventeDos
-            q1 = envolventeDos[indiceDosSuperior]
-            q2 = envolventeDos[indiceDosSuperior-1]
+        while not estaALaDerecha(q, p1, p2):
+            indiceUnoInferior = (indiceUnoInferior + 1) % tamEnvolventeUno
+            p1 = envolventeUno[indiceUnoInferior]
+            p2 = envolventeUno[(indiceUnoInferior + 1) % tamEnvolventeUno]
 
-        verticeDosSuperior = q1
-        p1 = p
-        p2 = envolventeUno[(indiceUnoSuperior + 1) % tamEnvolventeUno]
-        while estaALaDerecha(verticeDosSuperior, p1, p2):
-            indiceUnoSuperior = (indiceUnoSuperior + 1) % tamEnvolventeUno
-            p1 = envolventeUno[indiceUnoSuperior]
-            p2 = envolventeUno[(indiceUnoSuperior + 1) % tamEnvolventeUno]
+        verticePInferior = p1
+        q1 = q
+        q2 = envolventeDos[(tamEnvolventeDos + indiceDosInferior - 1) % tamEnvolventeDos]
+
+        while estaALaDerecha(verticePInferior, q1, q2):
+            indiceDosInferior = (tamEnvolventeDos + indiceDosInferior - 1) % tamEnvolventeDos
+            q1 = envolventeDos[indiceDosInferior]
+            q2 = envolventeDos[(tamEnvolventeDos + indiceDosInferior - 1) % tamEnvolventeDos]
             encontrada = False
-        p = p1
+        q = q1
 
-    return [indiceUnoSuperior, indiceDosSuperior]
+    return [indiceUnoInferior, indiceDosInferior]
 
 
+#Función que calcula cuál es el punto más a la derecha de una envolvente
 def calcularPuntoMasALaDerecha(envolvente):
     max = 0
     indice = 0
@@ -283,6 +291,7 @@ def calcularPuntoMasALaDerecha(envolvente):
             indice = i
             max = coordX
     return indice
+
 
 def split(input_list):
     input_list_len = len(input_list)
@@ -334,6 +343,7 @@ if __name__ == "__main__":
     pintarPuntos([puntos])
     puntosNoAlineados = eliminarPuntosAlineados(puntos)
     pintarPuntos([puntosNoAlineados])
-    mostrarPuntos(puntosNoAlineados)
-    calcularEnvolventeConexa(puntosNoAlineados)
+    envolventeConexa = calcularEnvolventeConexa(puntosNoAlineados)
 
+    pintarPuntos([puntos])
+    pintarEnvolventes([envolventeConexa])
