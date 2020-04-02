@@ -25,13 +25,16 @@ class Punto:
     def getCoordY(self):
         return self.coords[1]
 
-    def calcularVectorCon(self, otro): # Devuelve un vector direccion este punto con el otro
+    # Devuelve el vector formado por este punto y "otro"
+    def calcularVectorCon(self, otro):
         return np.subtract(otro.coords, self.coords)
 
+    # Devuelve la distancia a otro punto
     def calcularDistanciaA(self, otro):
         vector = self.calcularVectorCon(otro)
         return np.linalg.norm(vector)
 
+    #Dice si un otro punto tiene las mismas coordenadas que otro.
     def esDistintoDe(self, otro):
         return self.coords[0] != otro.coords[0] or self.coords[1] != otro.coords[1]
 
@@ -49,6 +52,7 @@ def pintarPuntos(listasPuntos):
             y.append(p.getCoordY())
         plt.scatter(x, y, s=TAMANNO_PUNTOS)
     plt.show()
+
 
 def pintarEnvolventes(listaEnvolventes):
     plt.xlim(0, MAX_COORDS + 10)
@@ -68,6 +72,7 @@ def pintarEnvolventes(listaEnvolventes):
     plt.show()
 
 
+#Función que eliminan todos los puntos alineados
 def eliminarPuntosAlineados(puntos):
     copiaPuntos = puntos
     for a in puntos:
@@ -75,6 +80,7 @@ def eliminarPuntosAlineados(puntos):
             if b.esDistintoDe(a):
                 for c in puntos:
                     if c.esDistintoDe(a) and c.esDistintoDe(b):
+                        #Si están alineados eliminamos el más cercano al punto A
                         if estanAlineados(a, b, c):
                             distAB = a.calcularDistanciaA(b)
                             distAC = a.calcularDistanciaA(c)
@@ -83,8 +89,10 @@ def eliminarPuntosAlineados(puntos):
                             else:
                                 copiaPuntos.remove(c)
     return copiaPuntos
+#fin eliminarPuntosAlineados
 
 
+#Determina si tres puntos estan alineados
 def estanAlineados(a, b, c):
     vectorAB = a.calcularVectorCon(b)
     vectorAC = a.calcularVectorCon(c)
@@ -105,6 +113,7 @@ def estaALaDerecha(a, b, c):
     det = np.linalg.det(matrizBase)
 
     return det < 0
+#fin estaALaDerecha
 
 
 def crearPuntos():
@@ -154,14 +163,18 @@ def calcularEnvolventeConexa(listaPuntos):
         pintarPuntos([mitadUno, mitadDos])
         pintarEnvolventes([envolventeUno, envolventeDos])
 
+        #Por último unimos las envolventes
         envolventeConjunta = unirEnvolventesConexas(envolventeUno, envolventeDos)
         pintarEnvolventes([envolventeConjunta])
         return envolventeConjunta
 
 
+#Crea la envolvente conexa con el algoritmo de fuerza bruta. Al ser para casos pequeños no afecta al rendimiento.
 def envolventeFuerzaBruta(listPuntos):
+    #NOTA: esta función asume que los puntos están ordenados de izquierda a derecha.
     numPuntos = len(listPuntos)
     envolvente = []
+
     #Cogemos el punto más a la izquierda (ya está ordenado) y buscamos la primera arista
     siguientePunto = listPuntos[0]
     envolvente.append(siguientePunto)
@@ -182,30 +195,41 @@ def envolventeFuerzaBruta(listPuntos):
                 #Con break salimos del bucle for
                 break
 
-    #Quitamos el elemento repetido
+    #Quitamos el elemento repetido (se repite el primer punto siempre)
     envolvente.pop()
 
     return envolvente
+#fin envolventeFuerzaBruta
 
 
+#Función que recibe dos envolventes conexas y las une mediante sus tangentes.
 def unirEnvolventesConexas(envolventeUno, envolventeDos):
     envolventeConjunta = []
+
+    #Primero calculamos los indices que apuntan a los vértices que realizarán la unión.
     indicesSuperiores = calcularTangenteSuperior(envolventeUno, envolventeDos)
     indicesInferiores = calcularTangenteInferior(envolventeUno, envolventeDos)
 
+    #Unimos los primeros puntos de la primera envolvente
     envolventeConjunta += envolventeUno[0: indicesSuperiores[0]+1]
+
+    #Añadimos los de la segundas (si el indice inferior es 0, puede dar problemas, por eso se añade aparte
     if indicesInferiores[1] == 0:
         envolventeConjunta += envolventeDos[indicesSuperiores[1]: len(envolventeDos)]
         envolventeConjunta += [envolventeDos[0]]
     else:
         envolventeConjunta += envolventeDos[indicesSuperiores[1]: indicesInferiores[1]+1]
 
+    #Completamos los puntos de la envolvente final
+    # (Si el indice inferior de la primera convexa es 0, no se añade porque está desde el principio)
     if indicesInferiores[0] != 0:
         envolventeConjunta += envolventeUno[indicesInferiores[0]: len(envolventeUno)]
 
     return envolventeConjunta
+#fin unirEnvolventesConexas
 
 
+#Función que calcula la envolvente superior
 def calcularTangenteSuperior(envolventeUno, envolventeDos):
 
     tamEnvolventeUno = len(envolventeUno)
@@ -216,6 +240,7 @@ def calcularTangenteSuperior(envolventeUno, envolventeDos):
     # Cogemos la posición en la lista del punto más a la izquierda de la segunda envolvente
     indiceDosSuperior = 0  # En este caso será siempre la primera
 
+    #Inicializamos los puntos
     p = envolventeUno[indiceUnoSuperior]
     q1 = envolventeDos[indiceDosSuperior]
     q2 = envolventeDos[indiceDosSuperior+1]
@@ -225,24 +250,30 @@ def calcularTangenteSuperior(envolventeUno, envolventeDos):
     while not encontrada:
         encontrada = True
 
+        #Primero recorremos la env. derecha en sentido horario hasta que no veamos una arista desde p
         while not estaALaDerecha(p, q1, q2):
             indiceDosSuperior = (indiceDosSuperior+1) % tamEnvolventeDos
             q1 = envolventeDos[indiceDosSuperior]
             q2 = envolventeDos[(indiceDosSuperior+1) % tamEnvolventeDos]
-
+        #Y guardamos el vértice donde se produce el cambio (vDS)
         verticeDosSuperior = q1
+
+        #Ahora recorremos la envolvente izquierda en sentido antihorario hasta que no veamos una arista desde vDS.
         p1 = p
         p2 = envolventeUno[(tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno]
         while estaALaDerecha(verticeDosSuperior, p1, p2):
             indiceUnoSuperior = (tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno
             p1 = envolventeUno[indiceUnoSuperior]
             p2 = envolventeUno[(tamEnvolventeUno + indiceUnoSuperior - 1) % tamEnvolventeUno]
+            #Si hemos entrado en este bucle es que todavía podemos encontrar otro vDS
             encontrada = False
         p = p1
 
     return [indiceUnoSuperior, indiceDosSuperior]
+#fin calcularTangenteSuperior
 
 
+#Función que calcula la tangente inferior de dos envolventes conexas (es inversa a la funcion de tg superior)
 def calcularTangenteInferior(envolventeUno, envolventeDos):
 
     tamEnvolventeDos = len(envolventeDos)
@@ -279,6 +310,7 @@ def calcularTangenteInferior(envolventeUno, envolventeDos):
         q = q1
 
     return [indiceUnoInferior, indiceDosInferior]
+#fin calcularTangenteInferior
 
 
 #Función que calcula cuál es el punto más a la derecha de una envolvente
@@ -291,6 +323,7 @@ def calcularPuntoMasALaDerecha(envolvente):
             indice = i
             max = coordX
     return indice
+#fin calcularPuntoMasALaDerecha
 
 
 def split(input_list):
