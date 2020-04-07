@@ -6,13 +6,14 @@ import random
 
 TAMANNO_PUNTOS = 15
 MAX_COORDS = 101
-NUM_PUNTOS = 16
+NUM_PUNTOS = 50
 
 
 class Punto:
 
     def __init__(self, coordX, coordY):
         self.coords = np.array([coordX, coordY])
+        self.quitado = False
     #fin __init__
 
     def __str__(self):
@@ -84,10 +85,12 @@ def eliminarPuntosAlineados(puntos):
                         if estanAlineados(a, b, c):
                             distAB = a.calcularDistanciaA(b)
                             distAC = a.calcularDistanciaA(c)
-                            if distAB < distAC:
+                            if distAB < distAC and not b.quitado:
                                 copiaPuntos.remove(b)
-                            else:
+                                b.quitado = True
+                            elif not c.quitado:
                                 copiaPuntos.remove(c)
+                                c.quitado = True
     return copiaPuntos
 #fin eliminarPuntosAlineados
 
@@ -144,7 +147,9 @@ def mostrarPuntos(lista):
 def calcularEnvolventeConexa(listaPuntos):
     #Esperamos a tener un conjunto pequeño de puntos para calcular su envolvente conexa
     if len(listaPuntos) < 6:
+        pintarPuntos([listaPuntos])
         envolventePequeña = envolventeFuerzaBruta(listaPuntos)
+        pintarEnvolventes([envolventePequeña])
         return envolventePequeña
 
     # Si el conjunto no es lo suficientemente pequeño, lo dividimos en dos mitades.
@@ -380,3 +385,5 @@ if __name__ == "__main__":
 
     pintarPuntos([puntos])
     pintarEnvolventes([envolventeConexa])
+    print("Los puntos de la envolvente conexa en sentido horario son:")
+    mostrarPuntos(envolventeConexa)
