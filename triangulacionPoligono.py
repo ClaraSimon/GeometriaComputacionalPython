@@ -1,3 +1,8 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+
+
 class Punto:
 
     def __init__(self, coordX, coordY):
@@ -27,6 +32,13 @@ class Punto:
     #Dice si un otro punto tiene las mismas coordenadas que otro.
     def esDistintoDe(self, otro):
         return self.coords[0] != otro.coords[0] or self.coords[1] != otro.coords[1]
+
+
+class Arista:
+    def __init__(self, inicio: Punto, fin: Punto):
+        self.inicio = inicio
+        self.fin = fin
+    #fin __init__
 
 
 if __name__ == "__main__":
