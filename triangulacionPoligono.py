@@ -47,7 +47,7 @@ class MiPunto:
 
     #Dice si el punto está por encima de b
     def estaPorEncimaDe(self, b):
-        return self.getCoordY() > b.getCoordY()
+        return self.getCoordY() >= b.getCoordY()
 
 
 class Arista:
@@ -65,8 +65,20 @@ class Vertice:
         self.tipo = self.definirTipo()
 
     def definirTipo(self):
+        estaPorEncimadeIzq = self.punto.estaPorEncimaDe(self.adyacenteIzq)
+        estaPorEncimadeDer = self.punto.estaPorEncimaDe(self.adyacenteDer)
+        esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer) #Si el adyacente de la derecha está a la derecha de la linea adyIzq y este vertice
 
-        return "Tipo1"
+        if estaPorEncimadeDer and estaPorEncimadeIzq and esConvexo:
+            return "Inicio"
+        elif estaPorEncimadeIzq and estaPorEncimadeDer and not esConvexo:
+            return "Division"
+        elif (estaPorEncimadeIzq and not estaPorEncimadeDer) or (not estaPorEncimadeIzq and estaPorEncimadeDer):
+            return "Regular"
+        elif esConvexo:
+            return "Fin"
+        else:
+            return "Union"
 
 
 def pintarPoligono(poligono):
