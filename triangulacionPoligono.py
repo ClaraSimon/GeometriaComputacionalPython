@@ -81,6 +81,18 @@ class Vertice:
             return "Union"
 
 
+class Poligono:
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.puntero = 0
+
+    def esMonotono(self):
+        for v in self.vertices:
+            if v.tipo == "Division" or v.tipo == "Union":
+                return False
+        return True
+
+
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
         return "b"
@@ -142,11 +154,12 @@ def crearPoligono(listaPuntos):
         puntoDer = listaPuntos[(i+1)%longitud]
         v = Vertice(punto, puntoIzq, puntoDer)
         poligono.append(v)
-    return poligono
+    return Poligono(poligono)
 
 
 if __name__ == "__main__":
     puntos = crearPuntos()
     poligono = crearPoligono(puntos)
-    pintarPoligono(poligono)
+    pintarPoligono(poligono.vertices)
+    print(poligono.esMonotono())
 
