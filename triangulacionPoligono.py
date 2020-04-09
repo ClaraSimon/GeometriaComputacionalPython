@@ -81,22 +81,38 @@ class Vertice:
             return "Union"
 
 
+def elegirColor(v):
+    if v.tipo == "Inicio": #Azul
+        return "b"
+    if v.tipo == "Division": #Rojo
+        return "r"
+    if v.tipo == "Regular": #Verde
+        return "g"
+    if v.tipo == "Fin": #Amarillo
+        return "y"
+    if v.tipo == "Union": #Morado
+        return "m"
+
+
 def pintarPoligono(poligono):
     plt.xlim(0, MAX_COORDS)
     plt.ylim(0, MAX_COORDS)
-    x=[]
-    y=[]
-    for p in poligono:
-        x.append(p.getCoordX())
-        y.append(p.getCoordY())
+    x = []
+    y = []
+    col = []
+    for v in poligono:
+        x.append(v.punto.getCoordX())
+        y.append(v.punto.getCoordY())
+        col.append(elegirColor(v))
     x.append(x[0])
     y.append(y[0])
-    plt.scatter(x, y, s=TAMANNO_PUNTOS)
+    col.append(col[0])
+    plt.scatter(x, y, c=col, s=TAMANNO_PUNTOS)
     plt.plot(x, y)
     plt.show()
 
 
-def crearPoligono():
+def crearPuntos():
     p1 = MiPunto(1, 2)
     p2 = MiPunto(2, 1)
     p3 = MiPunto(3, 2)
@@ -111,13 +127,26 @@ def crearPoligono():
     p12 = MiPunto(2, 3)
     p13 = MiPunto(1, 2)
 
-    poligono = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13]
+    #Sentido horario
+    puntos = [p13, p12, p11, p10, p9, p8, p7, p6, p5, p4, p3, p2, p1]
 
+    return puntos
+
+
+def crearPoligono(listaPuntos):
+    poligono = []
+    longitud = len(listaPuntos)
+    for i in range(longitud):
+        puntoIzq = listaPuntos[(longitud+i-1)%longitud]
+        punto = listaPuntos[i]
+        puntoDer = listaPuntos[(i+1)%longitud]
+        v = Vertice(punto, puntoIzq, puntoDer)
+        poligono.append(v)
     return poligono
 
 
 if __name__ == "__main__":
-    print("ola")
-    poligono = crearPoligono()
+    puntos = crearPuntos()
+    poligono = crearPoligono(puntos)
     pintarPoligono(poligono)
 
