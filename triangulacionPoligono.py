@@ -57,20 +57,27 @@ class Arista:
         self.fin = fin
     #fin __init__
 
+    #Dice si interseca con otra arista (asumimos que sus extremos no coinciden en el mismo punto)
+    def intersecaCon(self, otra):
+        estaALaDerecha = self.inicio.estaALaDerecha(self.fin, otra.inicio) and self.inicio.estaALaDerecha(self.fin, otra.fin)
+        estaALaIzquierda = not self.inicio.estaALaDerecha(self.fin, otra.inicio) and not self.inicio.estaALaDerecha(self.fin, otra.fin)
+
+        return estaALaDerecha or estaALaIzquierda
 
 class Vertice:
     def __init__(self, punto: MiPunto, adyacenteIzq: MiPunto, adyacenteDer: MiPunto):
         self.punto = punto
         self.adyacenteIzq = adyacenteIzq
         self.adyacenteDer = adyacenteDer
-        self.tipo = self.definirTipo()
+        self.convexo = self.definirTipo()
 
     def definirTipo(self):
-        estaPorEncimadeIzq = self.punto.estaPorEncimaDe(self.adyacenteIzq)
-        estaPorEncimadeDer = self.punto.estaPorEncimaDe(self.adyacenteDer)
-        esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer) #Si el adyacente de la derecha está a la derecha de la linea adyIzq y este vertice
+        #estaPorEncimadeIzq = self.punto.estaPorEncimaDe(self.adyacenteIzq)
+        #estaPorEncimadeDer = self.punto.estaPorEncimaDe(self.adyacenteDer)
+        # Si el adyacente de la derecha está a la derecha de la linea adyIzq y este vértice
+        esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer)
 
-        if estaPorEncimadeDer and estaPorEncimadeIzq and esConvexo:
+        '''if estaPorEncimadeDer and estaPorEncimadeIzq and esConvexo:
             return "Inicio"
         elif estaPorEncimadeIzq and estaPorEncimadeDer and not esConvexo:
             return "Division"
@@ -79,7 +86,12 @@ class Vertice:
         elif esConvexo:
             return "Fin"
         else:
-            return "Union"
+            return "Union"'''
+        return esConvexo
+
+    def cambiarAdyacentes(self, izq, der):
+        self.adyacenteIzq = izq
+        self.adyacenteDer = der
 
 
 class Poligono:
