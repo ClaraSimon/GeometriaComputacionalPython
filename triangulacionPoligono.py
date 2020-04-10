@@ -57,25 +57,32 @@ class Arista:
         self.fin = fin
     #fin __init__
 
-    #Dice si interseca con otra arista (asumimos que sus extremos no coinciden en el mismo punto)
+    #Dice si interseca con otra arista
     def intersecaCon(self, otra):
+        coincideInicio = not self.inicio.esDistintoDe(otra.inicio) or not self.inicio.esDistintoDe(otra.fin)
+        coincideFin = not self.fin.esDistintoDe(otra.inicio) or not self.fin.esDistintoDe(otra.fin)
+        if coincideFin or coincideInicio:
+            return False
+
         estaALaDerecha = self.inicio.estaALaDerecha(self.fin, otra.inicio) and self.inicio.estaALaDerecha(self.fin, otra.fin)
         estaALaIzquierda = not self.inicio.estaALaDerecha(self.fin, otra.inicio) and not self.inicio.estaALaDerecha(self.fin, otra.fin)
 
         return estaALaDerecha or estaALaIzquierda
+#FIN ARISTA
+
 
 class Vertice:
     def __init__(self, punto: MiPunto, adyacenteIzq: MiPunto, adyacenteDer: MiPunto):
         self.punto = punto
         self.adyacenteIzq = adyacenteIzq
         self.adyacenteDer = adyacenteDer
-        self.convexo = self.definirTipo()
+        self.convexo = False
+        self.definirTipo()
 
     def definirTipo(self):
         #estaPorEncimadeIzq = self.punto.estaPorEncimaDe(self.adyacenteIzq)
         #estaPorEncimadeDer = self.punto.estaPorEncimaDe(self.adyacenteDer)
         # Si el adyacente de la derecha está a la derecha de la linea adyIzq y este vértice
-        esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer)
 
         '''if estaPorEncimadeDer and estaPorEncimadeIzq and esConvexo:
             return "Inicio"
@@ -87,30 +94,28 @@ class Vertice:
             return "Fin"
         else:
             return "Union"'''
-        return esConvexo
+        esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer)
+        self.convexo = esConvexo
 
     def cambiarAdyacentes(self, izq, der):
         self.adyacenteIzq = izq
         self.adyacenteDer = der
+#FIN VERTICE
 
 
 class Poligono:
     def __init__(self, listaPuntos):
         #Vértices iniciales del polígono que nos guardamos para pintar
-        self.verticesIniciales = self.crearVertices(listaPuntos)
+        self.verticesIniciales = None
+        self.crearVertices(listaPuntos)
         #Lista de vértices que actualizaremos al hacer el método de las "orejas"
         self.verticesRestantes = self.verticesIniciales
         #Lista de aristas iniciales del polígono
-        self.aristasExteriores = self.crearAristas(listaPuntos)
+        self.aristasPoligono = None
+        self.crearAristas(listaPuntos)
         #Lista de aristas interiores de la triangulación que iremos actualizando
         self.aristasTriangulacion = []
         self.puntero = 0
-
-    def esMonotono(self):
-        for v in self.vertices:
-            if v.tipo == "Division" or v.tipo == "Union":
-                return False
-        return True
 
     def crearVertices(self, listaPuntos):
         vertices = []
@@ -121,10 +126,51 @@ class Poligono:
             puntoDer = listaPuntos[(i + 1) % longitud]
             v = Vertice(punto, puntoIzq, puntoDer)
             vertices.append(v)
-        return vertices
+        self.verticesIniciales = vertices
 
     def crearAristas(self, listaPuntos):
-        vertices
+        aristas = []
+        longitud = len(listaPuntos)
+        for i in range(longitud):
+            puntoInicio = listaPuntos[i]
+            puntoFin = listaPuntos[(i + 1) % longitud]
+            a = Arista(puntoInicio, puntoFin)
+            aristas.append(a)
+        self.aristasPoligono = aristas
+
+    def dibujar(self):
+        plt.xlim(0, MAX_COORDS)
+        plt.ylim(0, MAX_COORDS)
+        x = []
+        y = []
+        col = []
+        for v in self.verticesIniciales:
+            x.append(v.punto.getCoordX())
+            y.append(v.punto.getCoordY())
+        x.append(x[0])
+        y.append(y[0])
+        plt.scatter(x, y, s=TAMANNO_PUNTOS)
+        plt.plot(x, y)
+
+        for a in self.aristasTriangulacion:
+            x.clear()
+            y.clear()
+            x.append(a.inicio.getCoordX())
+            y.append(a.iniico.getCoordY())
+
+        plt.show()
+
+
+
+    '''
+    def esMonotono(self):
+        for v in self.vertices:
+            if v.tipo == "Division" or v.tipo == "Union":
+            return False
+        return True
+    '''
+
+#FIN POLIGONO
 
 '''
 def elegirColor(v):
@@ -139,24 +185,6 @@ def elegirColor(v):
     if v.tipo == "Union": #Morado
         return "m"
 '''
-
-
-def pintarPoligono(poligono):
-    plt.xlim(0, MAX_COORDS)
-    plt.ylim(0, MAX_COORDS)
-    x = []
-    y = []
-    col = []
-    for v in poligono:
-        x.append(v.punto.getCoordX())
-        y.append(v.punto.getCoordY())
-        col.append(elegirColor(v))
-    x.append(x[0])
-    y.append(y[0])
-    col.append(col[0])
-    plt.scatter(x, y, c=col, s=TAMANNO_PUNTOS)
-    plt.plot(x, y)
-    plt.show()
 
 
 def crearPuntos():
@@ -195,7 +223,6 @@ def crearPoligono(listaPuntos):
 if __name__ == "__main__":
     puntos = crearPuntos()
     poligono = Poligono(puntos)
-    pintarPoligono(poligono.vertices)
     print(poligono.esMonotono())
 
     cola = collections.que
