@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import collections
 
 TAMANNO_PUNTOS = 15
 MAX_COORDS = 10
@@ -83,7 +84,7 @@ class Vertice:
 
 class Poligono:
     def __init__(self, vertices):
-        self.vertices = vertices
+        self.puntos = puntos
         self.puntero = 0
 
     def esMonotono(self):
@@ -162,4 +163,6 @@ if __name__ == "__main__":
     poligono = crearPoligono(puntos)
     pintarPoligono(poligono.vertices)
     print(poligono.esMonotono())
+
+    cola = collections.que
 
