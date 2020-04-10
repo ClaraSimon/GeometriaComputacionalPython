@@ -57,6 +57,10 @@ class Arista:
         self.fin = fin
     #fin __init__
 
+    def __str__(self):
+        cadena = "Punto Inicial:" + str(self.inicio) + " Punto fin:" + str(self.fin)
+        return cadena
+
     #Dice si interseca con otra arista
     def intersecaCon(self, otra):
         coincideInicio = not self.inicio.esDistintoDe(otra.inicio) or not self.inicio.esDistintoDe(otra.fin)
@@ -66,8 +70,13 @@ class Arista:
 
         estaALaDerecha = self.inicio.estaALaDerecha(self.fin, otra.inicio) and self.inicio.estaALaDerecha(self.fin, otra.fin)
         estaALaIzquierda = not self.inicio.estaALaDerecha(self.fin, otra.inicio) and not self.inicio.estaALaDerecha(self.fin, otra.fin)
+        estaALaDerecha2 = otra.inicio.estaALaDerecha(otra.fin, self.inicio) and otra.inicio.estaALaDerecha(otra.fin, self.fin)
+        estaALaIzquierda2 = not otra.inicio.estaALaDerecha(otra.fin, self.inicio) and not otra.inicio.estaALaDerecha(otra.fin, self.fin)
 
-        return estaALaDerecha or estaALaIzquierda
+        if estaALaIzquierda or estaALaDerecha or estaALaDerecha2 or estaALaIzquierda2:
+            return False
+        else:
+            return True
 #FIN ARISTA
 
 
@@ -97,9 +106,16 @@ class Vertice:
         esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer)
         self.convexo = esConvexo
 
-    def cambiarAdyacentes(self, izq, der):
+    def cambiarAdyacentesIzq(self, izq):
         self.adyacenteIzq = izq
+        self.definirTipo()
+
+    def cambiarAdyacentesDer(self, der):
         self.adyacenteDer = der
+        self.definirTipo()
+
+    def esConvexo(self):
+        return self.convexo
 #FIN VERTICE
 
 
@@ -109,7 +125,7 @@ class Poligono:
         self.verticesIniciales = None
         self.crearVertices(listaPuntos)
         #Lista de vértices que actualizaremos al hacer el método de las "orejas"
-        self.verticesRestantes = self.verticesIniciales
+        self.verticesRestantes = self.verticesIniciales[:]
         #Lista de aristas iniciales del polígono
         self.aristasPoligono = None
         self.crearAristas(listaPuntos)
@@ -138,12 +154,51 @@ class Poligono:
             aristas.append(a)
         self.aristasPoligono = aristas
 
+    def calcularTriangulacion(self):
+        while len(self.verticesRestantes) > 3:
+            verticesAEliminar = []
+            longitud = len(self.verticesRestantes)
+            for i in range(longitud):
+                v = self.verticesRestantes[i]
+                if v.esConvexo(): #Al ser convexo es candidato a ser oreja
+                    pAnterior = v.adyacenteIzq
+                    pSiguiente = v.adyacenteDer
+                    aristaNueva = Arista(pAnterior, pSiguiente)
+                    if not self.interseca(aristaNueva): #Si la arista no interseca con otra es que el vértice es oreja
+                        verticesAEliminar.append(v)
+                        self.aristasTriangulacion.append(aristaNueva)
+                        self.dibujar()
+                        if longitud == 4:
+                            break
+            self.actualizarListaDeVertices(verticesAEliminar)
+
+    def actualizarListaDeVertices(self, lista):
+        #Quitamos los vértices que están en el punto medio de la oreja
+        for v in lista:
+            self.verticesRestantes.remove(v)
+
+        longitud = len(self.verticesRestantes)
+        #Actualizamos la adyacencia de vértices
+        for i in range(longitud):
+            puntoIzq = self.verticesRestantes[(longitud + i - 1) % longitud].punto
+            puntoDer = self.verticesRestantes[(i + 1) % longitud].punto
+            self.verticesRestantes[i].cambiarAdyacentesIzq(puntoIzq)
+            self.verticesRestantes[i].cambiarAdyacentesDer(puntoDer)
+
+    def interseca(self, arista):
+        for a in self.aristasPoligono:
+            if arista.intersecaCon(a):
+                return True
+        for a in self.aristasTriangulacion:
+            if arista.intersecaCon(a):
+                return True
+        return False
+
     def dibujar(self):
         plt.xlim(0, MAX_COORDS)
         plt.ylim(0, MAX_COORDS)
         x = []
         y = []
-        col = []
         for v in self.verticesIniciales:
             x.append(v.punto.getCoordX())
             y.append(v.punto.getCoordY())
@@ -156,11 +211,11 @@ class Poligono:
             x.clear()
             y.clear()
             x.append(a.inicio.getCoordX())
-            y.append(a.iniico.getCoordY())
-
+            y.append(a.inicio.getCoordY())
+            x.append(a.fin.getCoordX())
+            y.append(a.fin.getCoordY())
+            plt.plot(x, y, c="m")
         plt.show()
-
-
 
     '''
     def esMonotono(self):
@@ -169,8 +224,8 @@ class Poligono:
             return False
         return True
     '''
-
 #FIN POLIGONO
+
 
 '''
 def elegirColor(v):
@@ -200,30 +255,16 @@ def crearPuntos():
     p10 = MiPunto(3, 6)
     p11 = MiPunto(1, 7)
     p12 = MiPunto(2, 3)
-    p13 = MiPunto(1, 2)
 
     #Sentido horario
-    puntos = [p13, p12, p11, p10, p9, p8, p7, p6, p5, p4, p3, p2, p1]
+    puntos = [p12, p11, p10, p9, p8, p7, p6, p5, p4, p3, p2, p1]
 
     return puntos
-
-
-def crearPoligono(listaPuntos):
-    poligono = []
-    longitud = len(listaPuntos)
-    for i in range(longitud):
-        puntoIzq = listaPuntos[(longitud+i-1)%longitud]
-        punto = listaPuntos[i]
-        puntoDer = listaPuntos[(i+1)%longitud]
-        v = Vertice(punto, puntoIzq, puntoDer)
-        poligono.append(v)
-    return Poligono(poligono)
 
 
 if __name__ == "__main__":
     puntos = crearPuntos()
     poligono = Poligono(puntos)
-    print(poligono.esMonotono())
-
-    cola = collections.que
+    poligono.dibujar()
+    poligono.calcularTriangulacion()
 
