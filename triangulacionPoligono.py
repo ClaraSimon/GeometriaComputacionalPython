@@ -95,8 +95,15 @@ class Vertice:
 
 
 class Poligono:
-    def __init__(self, vertices):
-        self.puntos = puntos
+    def __init__(self, listaPuntos):
+        #Vértices iniciales del polígono que nos guardamos para pintar
+        self.verticesIniciales = self.crearVertices(listaPuntos)
+        #Lista de vértices que actualizaremos al hacer el método de las "orejas"
+        self.verticesRestantes = self.verticesIniciales
+        #Lista de aristas iniciales del polígono
+        self.aristasExteriores = self.crearAristas(listaPuntos)
+        #Lista de aristas interiores de la triangulación que iremos actualizando
+        self.aristasTriangulacion = []
         self.puntero = 0
 
     def esMonotono(self):
@@ -105,7 +112,21 @@ class Poligono:
                 return False
         return True
 
+    def crearVertices(self, listaPuntos):
+        vertices = []
+        longitud = len(listaPuntos)
+        for i in range(longitud):
+            puntoIzq = listaPuntos[(longitud + i - 1) % longitud]
+            punto = listaPuntos[i]
+            puntoDer = listaPuntos[(i + 1) % longitud]
+            v = Vertice(punto, puntoIzq, puntoDer)
+            vertices.append(v)
+        return vertices
 
+    def crearAristas(self, listaPuntos):
+        vertices
+
+'''
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
         return "b"
@@ -117,6 +138,7 @@ def elegirColor(v):
         return "y"
     if v.tipo == "Union": #Morado
         return "m"
+'''
 
 
 def pintarPoligono(poligono):
@@ -172,7 +194,7 @@ def crearPoligono(listaPuntos):
 
 if __name__ == "__main__":
     puntos = crearPuntos()
-    poligono = crearPoligono(puntos)
+    poligono = Poligono(puntos)
     pintarPoligono(poligono.vertices)
     print(poligono.esMonotono())
 
