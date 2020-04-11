@@ -248,17 +248,21 @@ class Nodo:
         self.color = "w"
 
     def annadirAdyacente(self, indice):
-        self.append(indice)
+        self.adyacentes.append(indice)
 
 
 class Grafo:
-    def __init__(self, nodos):
-        self.nodos = nodos
+    COLORES = "rgbmkc"
 
-    def buscarPosicionDeElemento(self, punto):
-        for i in range(self.nodos):
+    def __init__(self, puntos):
+        self.nodos = []
+        for p in puntos:
+            self.nodos.append(Nodo(p))
+
+    def buscarPosicionDeElemento(self, p):
+        for i in range(len(self.nodos)):
             n = self.nodos[i]
-            if not n.punto.esDistintoDe(punto):
+            if not n.punto.esDistintoDe(p):
                 return i
 
     def actualizarAdyacentes(self, arista):
@@ -268,7 +272,71 @@ class Grafo:
         self.nodos[posInicio].annadirAdyacente(posFin)
         self.nodos[posFin].annadirAdyacente(posInicio)
 
+    def dibujarGrafo(self):
+        plt.xlim(0, MAX_COORDS)
+        plt.ylim(0, MAX_COORDS)
+        x = []
+        y = []
+        col = []
+        for n in self.nodos:
+            x.append(n.punto.getCoordX())
+            y.append(n.punto.getCoordY())
+            col.append(n.color)
+            for ady in n.adyacentes:
+                x1 = self.nodos[ady].punto.getCoordX()
+                x2 = n.punto.getCoordX()
+                y1 = self.nodos[ady].punto.getCoordY()
+                y2 = n.punto.getCoordY()
+                plt.plot([x1, x2], [y1, y2], c="y", linewidth = 0.2)
+        x.append(x[0])
+        y.append(y[0])
+        col.append(col[0])
+        plt.scatter(x, y, c=col, s=TAMANNO_PUNTOS)
+        plt.show()
 
+    def pintarNodos(self):
+        pintados = []
+        for i in range(len(self.nodos)):
+            pintados.append(False)
+        nodoActual = self.nodos[0]
+        nodoActual.color = "r"
+        pintados[0] = True
+        nodosPorPintar = self.cogerAdyacentesDe(0, pintados)
+
+        while not self.estanPintados():
+            indiceActual = nodosPorPintar.pop(0)
+            nodoActual = self.nodos[indiceActual]
+            print(nodoActual.punto)
+            c = 0
+            while not pintados[indiceActual]:
+                color = self.COLORES[c]
+                pintar = True
+                for i in nodoActual.adyacentes:
+                    print(self.nodos[i].color)
+                    if self.nodos[i].color == self.COLORES[c]:
+                        print("IGUAL")
+                        pintar = False
+                        break
+
+                if pintar:
+                    nodoActual.color = color
+                    pintados[indiceActual] = True
+                else:
+                    c = c + 1
+            nodosPorPintar += self.cogerAdyacentesDe(indiceActual, pintados)
+
+    def cogerAdyacentesDe(self, indice, recorridos):
+        lista = []
+        for i in self.nodos[indice].adyacentes:
+            if not recorridos[i]:
+                lista.append(i)
+        return lista
+
+    def estanPintados(self):
+        for n in self.nodos:
+            if n.color == "w":
+                return False
+        return True
 '''
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
@@ -309,4 +377,6 @@ if __name__ == "__main__":
     poligono = Poligono(puntos)
     poligono.dibujar()
     poligono.calcularTriangulacion()
-
+    grafoTriangulacion = poligono.convertirAGrafo()
+    grafoTriangulacion.pintarNodos()
+    grafoTriangulacion.dibujarGrafo()
