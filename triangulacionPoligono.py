@@ -237,6 +237,24 @@ class Nodo:
         self.append(indice)
 
 
+class Grafo:
+    def __init__(self, nodos):
+        self.nodos = nodos
+
+    def buscarPosicionDeElemento(self, punto):
+        for i in range(self.nodos):
+            n = self.nodos[i]
+            if not n.punto.esDistintoDe(punto):
+                return i
+
+    def actualizarAdyacentes(self, arista):
+        posInicio = self.buscarPosicionDeElemento(arista.inicio)
+        posFin = self.buscarPosicionDeElemento(arista.fin)
+
+        self.nodos[posInicio].annadirAdyacente(posFin)
+        self.nodos[posFin].annadirAdyacente(posInicio)
+
+
 '''
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
