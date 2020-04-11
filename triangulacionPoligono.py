@@ -217,6 +217,20 @@ class Poligono:
             plt.plot(x, y, c="m")
         plt.show()
 
+    def convertirAGrafo(self):
+        puntos = []
+        for v in self.verticesIniciales:
+            puntos.append(v.punto)
+
+        grafo = Grafo(puntos)
+
+        for a in self.aristasTriangulacion:
+            grafo.actualizarAdyacentes(a)
+
+        for a in self.aristasPoligono:
+            grafo.actualizarAdyacentes(a)
+
+        return grafo
     '''
     def esMonotono(self):
         for v in self.vertices:
