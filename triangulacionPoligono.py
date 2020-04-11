@@ -231,6 +231,7 @@ class Nodo:
     def __init__(self, punto):
         self.punto = punto
         self.adyacentes = []
+        self.color = "w"
 
     def annadirAdyacente(self, indice):
         self.append(indice)
