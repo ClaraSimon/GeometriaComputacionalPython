@@ -227,6 +227,15 @@ class Poligono:
 #FIN POLIGONO
 
 
+class Nodo:
+    def __init__(self, punto):
+        self.punto = punto
+        self.adyacentes = []
+
+    def annadirAdyacente(self, indice):
+        self.append(indice)
+
+
 '''
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
