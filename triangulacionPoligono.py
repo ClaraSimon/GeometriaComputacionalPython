@@ -1,41 +1,51 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import random
-import collections
 
+#Tamanno de los puntos en el gráfico
 TAMANNO_PUNTOS = 15
+#Coordenadas máximas de los puntos
 MAX_COORDS = 10
-NUM_PUNTOS = 50
 
 
+#Clase Punto que guarda unas coordenadas
 class MiPunto:
-
+    #Constructor
     def __init__(self, coordX, coordY):
         self.coords = np.array([coordX, coordY])
         self.quitado = False
+    #fin constructor
 
+    #Pasa a string
     def __str__(self):
         cadena = "Coordenadas:" + str(self.coords)
         return cadena
+    #fin
 
+    #Devuelve la coordenada x
     def getCoordX(self):
         return self.coords[0]
+    #fin getCoordX
 
+    #Devuelve la coordenada y
     def getCoordY(self):
         return self.coords[1]
+    #fin getCoordY
 
     # Devuelve el vector formado por este punto y "otro"
     def calcularVectorCon(self, otro):
         return np.subtract(otro.coords, self.coords)
+    #fin calcularVectorCon
 
     # Devuelve la distancia a otro punto
     def calcularDistanciaA(self, otro):
         vector = self.calcularVectorCon(otro)
         return np.linalg.norm(vector)
+    #fin calcularDistanciaA
 
     #Dice si un otro punto tiene las mismas coordenadas que otro.
     def esDistintoDe(self, otro):
         return self.coords[0] != otro.coords[0] or self.coords[1] != otro.coords[1]
+    #fin esDistintoDe
 
     #Dice si el punto c está a la derecha de la recta que pasa por este punto y b
     def estaALaDerecha(self, b, c):
@@ -45,12 +55,15 @@ class MiPunto:
         matrizBase = np.transpose(matriz)
         det = np.linalg.det(matrizBase)
         return det < 0
+    #fin estaALaDerecha
 
     #Dice si el punto está por encima de b
     def estaPorEncimaDe(self, b):
         return self.getCoordY() >= b.getCoordY()
+    #fin estaPorEncimaDe
 
 
+#Clase Arista que contiene los puntos de sus extremos
 class Arista:
     def __init__(self, inicio: MiPunto, fin: MiPunto):
         self.inicio = inicio
@@ -63,11 +76,13 @@ class Arista:
 
     #Dice si interseca con otra arista
     def intersecaCon(self, otra):
+        #Si esta arista y la otra comparten un extremo no se cortan
         coincideInicio = not self.inicio.esDistintoDe(otra.inicio) or not self.inicio.esDistintoDe(otra.fin)
         coincideFin = not self.fin.esDistintoDe(otra.inicio) or not self.fin.esDistintoDe(otra.fin)
         if coincideFin or coincideInicio:
             return False
 
+        #Si una de las aristas esta a la derecha o a la izquierda de la restante tampoco se intersecan
         estaALaDerecha = self.inicio.estaALaDerecha(self.fin, otra.inicio) and self.inicio.estaALaDerecha(self.fin, otra.fin)
         estaALaIzquierda = not self.inicio.estaALaDerecha(self.fin, otra.inicio) and not self.inicio.estaALaDerecha(self.fin, otra.fin)
         estaALaDerecha2 = otra.inicio.estaALaDerecha(otra.fin, self.inicio) and otra.inicio.estaALaDerecha(otra.fin, self.fin)
@@ -77,9 +92,11 @@ class Arista:
             return False
         else:
             return True
+    #fin intersecaCon
 #FIN ARISTA
 
 
+#Clase Vertice de un polígono, contiene su posicion y los Puntos adyacentes
 class Vertice:
     def __init__(self, punto: MiPunto, adyacenteIzq: MiPunto, adyacenteDer: MiPunto):
         self.punto = punto
@@ -88,6 +105,7 @@ class Vertice:
         self.convexo = False
         self.definirTipo()
 
+    #Dice si un vertice es convexo o no
     def definirTipo(self):
         #estaPorEncimadeIzq = self.punto.estaPorEncimaDe(self.adyacenteIzq)
         #estaPorEncimadeDer = self.punto.estaPorEncimaDe(self.adyacenteDer)
@@ -105,20 +123,28 @@ class Vertice:
             return "Union"'''
         esConvexo = self.adyacenteIzq.estaALaDerecha(self.punto, self.adyacenteDer)
         self.convexo = esConvexo
+    #fin definirTipo
 
+    #Actualiza el adyacente derecho del vértice y recalcula su tipo
     def cambiarAdyacentesIzq(self, izq):
         self.adyacenteIzq = izq
         self.definirTipo()
+    #fin cambiarAdyacentesIzq
 
+    #Actualiza el adyacente izquierdo del vértice y recalcula su tipo
     def cambiarAdyacentesDer(self, der):
         self.adyacenteDer = der
         self.definirTipo()
+    #fin cambiarAdyacentesDer
 
+    #Devuelve true si es convexo y false si no lo es
     def esConvexo(self):
         return self.convexo
+    #fin esConvexo
 #FIN VERTICE
 
 
+#Clase Poligono que contiene un conjunto de vértices y la lógica para triangularlo y pasar la triangulación a un grafo
 class Poligono:
     def __init__(self, listaPuntos):
         #Vértices iniciales del polígono que nos guardamos para pintar
@@ -133,6 +159,7 @@ class Poligono:
         self.aristasTriangulacion = []
         self.puntero = 0
 
+    #Recibe una lista de puntos y crea los vértices
     def crearVertices(self, listaPuntos):
         vertices = []
         longitud = len(listaPuntos)
@@ -143,7 +170,9 @@ class Poligono:
             v = Vertice(punto, puntoIzq, puntoDer)
             vertices.append(v)
         self.verticesIniciales = vertices
+    #fin crearVertices
 
+    #Recibe una lista de puntos y crea las aristas del polígono
     def crearAristas(self, listaPuntos):
         aristas = []
         longitud = len(listaPuntos)
@@ -153,25 +182,36 @@ class Poligono:
             a = Arista(puntoInicio, puntoFin)
             aristas.append(a)
         self.aristasPoligono = aristas
+    #fin crearAristas
 
+    #Realiza la triangulación del polígono mediante el método de recortar orejas
     def calcularTriangulacion(self):
+        #Mientras haya más de tres vértices es que se puede triangular
         while len(self.verticesRestantes) > 3:
+            #Lista que guarda los vértices que se eliminarán en esta iteración
             verticesAEliminar = []
             longitud = len(self.verticesRestantes)
+            #Recorremos la lista de vértices que se podrían recortar
             for i in range(longitud):
                 v = self.verticesRestantes[i]
-                if v.esConvexo(): #Al ser convexo es candidato a ser oreja
+                # Al ser convexo es candidato a ser oreja
+                if v.esConvexo():
                     pAnterior = v.adyacenteIzq
                     pSiguiente = v.adyacenteDer
                     aristaNueva = Arista(pAnterior, pSiguiente)
-                    if not self.interseca(aristaNueva): #Si la arista no interseca con otra es que el vértice es oreja
+                    # Si la arista que forman los adyacentes de v no interseca con otra es que el vértice es oreja
+                    if not self.interseca(aristaNueva):
+                        #Guardamos el vértice en la lista para eliminarlo más tarde
                         verticesAEliminar.append(v)
+                        #Agregamos la arista de la triangulación
                         self.aristasTriangulacion.append(aristaNueva)
                         self.dibujar()
                         if longitud == 4:
                             break
+            #Por último recortamos los vértices que hemos marcado (las "puntas" de las orejas)
             self.actualizarListaDeVertices(verticesAEliminar)
 
+    #Actualiza la lista de vértices que no se han recortado
     def actualizarListaDeVertices(self, lista):
         #Quitamos los vértices que están en el punto medio de la oreja
         for v in lista:
@@ -184,7 +224,9 @@ class Poligono:
             puntoDer = self.verticesRestantes[(i + 1) % longitud].punto
             self.verticesRestantes[i].cambiarAdyacentesIzq(puntoIzq)
             self.verticesRestantes[i].cambiarAdyacentesDer(puntoDer)
+    #fin actualizarListaDeVértices
 
+    #Dice si una arista interseca con el polígono
     def interseca(self, arista):
         for a in self.aristasPoligono:
             if arista.intersecaCon(a):
@@ -193,7 +235,9 @@ class Poligono:
             if arista.intersecaCon(a):
                 return True
         return False
+    #fin interseca
 
+    #Muestra el polígono en un gráfica
     def dibujar(self):
         plt.xlim(0, MAX_COORDS)
         plt.ylim(0, MAX_COORDS)
@@ -216,14 +260,18 @@ class Poligono:
             y.append(a.fin.getCoordY())
             plt.plot(x, y, c="m")
         plt.show()
+    #fin dibujar
 
+    #Método que convierte a grafo la triangulación obtenida
     def convertirAGrafo(self):
         puntos = []
         for v in self.verticesIniciales:
             puntos.append(v.punto)
 
+        #Creamos el grafo a partir de los puntos
         grafo = Grafo(puntos)
 
+        #Actualizamos las aristas del grafo
         for a in self.aristasTriangulacion:
             grafo.actualizarAdyacentes(a)
 
@@ -231,6 +279,7 @@ class Poligono:
             grafo.actualizarAdyacentes(a)
 
         return grafo
+    #fin convertirAGrafo
     '''
     def esMonotono(self):
         for v in self.vertices:
@@ -241,16 +290,19 @@ class Poligono:
 #FIN POLIGONO
 
 
+#El nodo de un grafo
 class Nodo:
     def __init__(self, punto):
         self.punto = punto
         self.adyacentes = []
         self.color = "w"
 
+    #Añade el índice (posición de un adyacente en la lista de nodos del grafo) a los adyacentes
     def annadirAdyacente(self, indice):
         self.adyacentes.append(indice)
+#FIN NODO
 
-
+#Grafo con una lista de nodos
 class Grafo:
     COLORES = "rgbmkc"
 
@@ -259,19 +311,25 @@ class Grafo:
         for p in puntos:
             self.nodos.append(Nodo(p))
 
+    #Devuelve en qué posición está un punto
     def buscarPosicionDeElemento(self, p):
         for i in range(len(self.nodos)):
             n = self.nodos[i]
             if not n.punto.esDistintoDe(p):
                 return i
+    #fin buscarPosiciónDeElemento
 
+    #Recibe una arista y añade los extremos de la misma como adyacentes.
     def actualizarAdyacentes(self, arista):
         posInicio = self.buscarPosicionDeElemento(arista.inicio)
         posFin = self.buscarPosicionDeElemento(arista.fin)
-
+        #Adyacente fin al nodo inicio
         self.nodos[posInicio].annadirAdyacente(posFin)
+        #Adyacente inicio al nodo fin
         self.nodos[posFin].annadirAdyacente(posInicio)
+    #fin actualizarAdyacentes
 
+    #Muestra el grafo en una gráfica
     def dibujarGrafo(self):
         plt.xlim(0, MAX_COORDS)
         plt.ylim(0, MAX_COORDS)
@@ -293,50 +351,69 @@ class Grafo:
         col.append(col[0])
         plt.scatter(x, y, c=col, s=TAMANNO_PUNTOS)
         plt.show()
+    #fin dibujarGrafo
 
+    #Colorea el grafo
     def pintarNodos(self):
+        #Vector de booleanos que dice si un nodo está pintado o no
         pintados = []
         for i in range(len(self.nodos)):
             pintados.append(False)
+
+        #Pintamos el primer nodo del color que queramos
         nodoActual = self.nodos[0]
         nodoActual.color = "r"
         pintados[0] = True
+        #Recorremos en anchura el grafo para pintarlo
         nodosPorPintar = self.cogerAdyacentesDe(0, pintados)
 
+        #Mientras que no estén todos los nodos pintados
         while not self.estanPintados():
+            #Cogemos el siguiente nodo a pintar
             indiceActual = nodosPorPintar.pop(0)
             nodoActual = self.nodos[indiceActual]
-            print(nodoActual.punto)
+            #Escogemos un color inicial para intentarlo pintar así
             c = 0
+            #Hasta que no hayamos pintado el nodo actual
             while not pintados[indiceActual]:
+                #Intentamos pintarlo del color número c
                 color = self.COLORES[c]
                 pintar = True
+                #Si tienen algún adyacente del mismo color no podemos pintarlo
                 for i in nodoActual.adyacentes:
-                    print(self.nodos[i].color)
                     if self.nodos[i].color == self.COLORES[c]:
                         print("IGUAL")
                         pintar = False
                         break
-
+                #Si lo podemos pintar lo pintamos
                 if pintar:
                     nodoActual.color = color
                     pintados[indiceActual] = True
+                #Si no intentamos con el siguiente color
                 else:
                     c = c + 1
+            #Como hemos pintado el nodo actual ya podemos añadir a la cola sus adyacentes no pintados
             nodosPorPintar += self.cogerAdyacentesDe(indiceActual, pintados)
+    #fin pintarNodos
 
+    #Devuelve los adyacentes no pintados del nodo en la posición (de la lista de nodos) índice
     def cogerAdyacentesDe(self, indice, recorridos):
         lista = []
         for i in self.nodos[indice].adyacentes:
             if not recorridos[i]:
                 lista.append(i)
         return lista
+    #fin cogerAdyacentesDe
 
+    #Devuelve true si todos los nodos tienen un color
     def estanPintados(self):
         for n in self.nodos:
             if n.color == "w":
                 return False
         return True
+    #fin estanPintados
+#FIN GRAFO
+
 '''
 def elegirColor(v):
     if v.tipo == "Inicio": #Azul
@@ -351,7 +428,7 @@ def elegirColor(v):
         return "m"
 '''
 
-
+#SE DEBEN PONER LOS PUNTOS DEL POLÍGONO EN SENTIDO HORARIO
 def crearPuntos():
     p1 = MiPunto(1, 2)
     p2 = MiPunto(2, 1)
